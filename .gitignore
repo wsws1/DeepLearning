@@ -132,6 +132,7 @@ VideoData/
 
 # dataset
 data
+data/
 # models
 models
 
