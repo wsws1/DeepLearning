@@ -10,15 +10,16 @@ from load_cifar10 import train_loader, test_loader
 import os
 
 # models save path
-models_path = './models/InceptionNetSmall'
-log_path = './log/InceptionNetSmall'
+models_path = './models/vggnet'
+log_path = './log/vggnet'
+
 # if has GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 epoch_num = 200
 lr = 0.01
 batch_size = 128
-net = InceptionNetSmall().to(device)
+net = VGGNet().to(device)
 
  #loss
 loss_fun = nn.CrossEntropyLoss()
@@ -31,76 +32,74 @@ optimizer = torch.optim.Adam(net.parameters(), lr=lr)
 # lr decrease after every 5 epoch, rate = gamma
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
 
+if not os.path.exists(log_path):
+    os.mkdir(log_path)
+writer = tensorboardX.SummaryWriter(log_path)
 
-if __name__ == '__main__':
+step_n = 0
+for epoch in range(epoch_num):
+    net.train()  # train BN dropout
+    print("epoch is ", epoch)
+    for i, data in enumerate(train_loader):
 
-    if not os.path.exists(log_path):
-        os.mkdir(log_path)
-    writer = tensorboardX.SummaryWriter(log_path)
+        inputs, labels = data
+        inputs, labels = inputs.to(device), labels.to(device)
 
-    step_n = 0
-    for epoch in range(epoch_num):
-        net.train() #train BN dropout
+        outputs = net(inputs)
+        loss = loss_fun(outputs, labels)
 
-        for i, data in enumerate(train_loader):
+        optimizer.zero_grad()
 
-            inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)
+        loss.backward()
+        optimizer.step()
 
-            outputs = net(inputs)
-            loss = loss_fun(outputs, labels)
+        _, pred = torch.max(outputs.data, dim=1)
 
-            optimizer.zero_grad()
+        correct = pred.eq(labels.data).cpu().sum()
 
-            loss.backward()
-            optimizer.step()
+        # print("epoch is ", epoch)
+        # print("step ,", i," loss is: ", loss.item(),
+        #       "mini-batch correct is :", 100.0 * correct.item() / batch_size)
+        # print("train lr is ", optimizer.state_dict()['param_groups'][0]['lr'])
 
-            _, pred = torch.max(outputs.data,dim=1)
+        writer.add_scalar("train loss", loss.item(), global_step=step_n)
+        writer.add_scalar("train correct", 100.0 * correct / batch_size, global_step=step_n)
 
-            correct = pred.eq(labels.data).cpu().sum()
+        im = torchvision.utils.make_grid(inputs)
+        writer.add_image("train im", im, global_step=step_n)
+        step_n += 1
+        if not os.path.exists(models_path):
+            os.mkdir(models_path)
+        torch.save(net.state_dict(), "{}/{}.pth".format(models_path, epoch + 1))
 
-            # print("epoch is ", epoch)
-            # print("step ,", i," loss is: ", loss.item(),
-            #       "mini-batch correct is :", 100.0 * correct.item() / batch_size)
-            # print("train lr is ", optimizer.state_dict()['param_groups'][0]['lr'])
+        scheduler.step()
 
-            writer.add_scalar("train loss", loss.item(),global_step=step_n)
-            writer.add_scalar("train correct", 100.0 * correct / batch_size, global_step=step_n)
+    sum_loss = 0.0
+    sum_correct = 0.0
+    for i, data in enumerate(test_loader):
+        net.eval()
+        inputs, labels = data
+        inputs, labels = inputs.to(device), labels.to(device)
 
-            im = torchvision.utils.make_grid(inputs)
-            writer.add_image("train im", im, global_step=step_n)
-            step_n += 1
-            if not os.path.exists(models_path):
-                os.mkdir(models_path)
-            torch.save(net.state_dict(), "models/{}.pth".format(epoch + 1))
+        outputs = net(inputs)
+        loss = loss_fun(outputs, labels)
+        _, pred = torch.max(outputs.data, dim=1)
 
-            scheduler.step()
+        correct = pred.eq(labels.data).cpu().sum()
 
-        sum_loss = 0.0
-        sum_correct = 0.0
-        for i, data in enumerate(test_loader):
-            net.eval()
-            inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)
+        sum_loss += loss.item()
+        sum_correct += correct.item()
 
-            outputs = net(inputs)
-            loss = loss_fun(outputs, labels)
-            _, pred = torch.max(outputs.data,dim=1)
+        print("cur correct is",correct.item())
+        im = torchvision.utils.make_grid(inputs)
+        writer.add_image("test im", im, global_step=step_n)
+    test_loss = sum_loss * 1.0 / len(test_loader)
+    test_correct = sum_correct * 100.0 / len(test_loader) / batch_size
 
-            correct = pred.eq(labels.data).cpu().sum()
+    writer.add_scalar("test loss", test_loss, global_step=epoch + 1)
+    writer.add_scalar("test correct", test_correct, global_step=epoch + 1)
+    print("test step ,", i, " loss is: ", test_loss,
+          "test_correct is :", test_correct)
+    print("test lr is ", optimizer.state_dict()['param_groups'][0]['lr'])
 
-            sum_loss += loss.item()
-            correct += correct.item()
-
-            im = torchvision.utils.make_grid(inputs)
-            writer.add_image("test im", im, global_step=step_n)
-        test_loss = sum_loss * 1.0 / len(test_loader)
-        test_correct = sum_correct * 100.0 / len(test_loader) / batch_size
-
-        writer.add_scalar("test loss", test_loss, global_step=epoch + 1)
-        writer.add_scalar("test correct", test_correct, global_step=epoch + 1)
-        print("test step ,", i," loss is: ", test_loss,
-              "test_correct is :", test_correct)
-        print("test lr is ", optimizer.state_dict()['param_groups'][0]['lr'])
-
-    writer.close()
+writer.close()
