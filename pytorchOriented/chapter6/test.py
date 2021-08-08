@@ -4,17 +4,15 @@ import cv2
 from PIL import Image
 from torchvision import transforms
 import numpy as np
-from base_resnet import resnet
+from resnet import resnet
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 net = resnet()
 
-net.load_state_dict(torch.load("/home/kuan/workspace/"
-                                  "muke/pytorch/06/"
-                                  "models/baseResnet/200.pth"))
+net.load_state_dict(torch.load("/Users/simo/Documents/pythonProjects/DeepLearning/pytorchOriented/chapter6/models/1.pth"))
 
-im_list = glob.glob("/home/kuan/dataset/CIFAR10/TEST/*/*")
+im_list = glob.glob("../data/CIFAR10/TEST/*/*")
 
 np.random.shuffle(im_list)
 
@@ -25,10 +23,8 @@ label_name = ["airplane", "automobile", "bird",
               "frog", "horse", "ship", "truck"]
 
 test_transform = transforms.Compose([
-    transforms.CenterCrop((28, 28)),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465),
-                         (0.2023, 0.1994, 0.2010)),
+    transforms.Resize((28, 28)),
+    transforms.ToTensor()
 ])
 
 for im_path in im_list:

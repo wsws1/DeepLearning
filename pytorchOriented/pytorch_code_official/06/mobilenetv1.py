@@ -35,6 +35,7 @@ class mobilenet(nn.Module):
 
         self.conv_dw6 = self.conv_dw(128, 128, 1)
         self.conv_dw7 = self.conv_dw(128, 256, 2)
+
         self.conv_dw8 = self.conv_dw(256, 256, 1)
         self.conv_dw9 = self.conv_dw(256, 512, 2)
 

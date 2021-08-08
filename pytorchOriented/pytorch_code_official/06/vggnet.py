@@ -29,7 +29,7 @@ class VGGbase(nn.Module):
 
         self.max_pooling2 = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        # 7 * 7
+        # 7 * 7 * 128
         self.conv3_1 = nn.Sequential(
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(256),
