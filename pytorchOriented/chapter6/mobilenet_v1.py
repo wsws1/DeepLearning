@@ -17,7 +17,7 @@ class mobilenet(nn.Module):
 
             nn.Conv2d(in_channel, out_channel,
                       kernel_size=1,
-                      stride=stride,
+                      stride=1,
                       padding=0,
                       bias=False),
             nn.BatchNorm2d(out_channel),

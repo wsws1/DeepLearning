@@ -48,6 +48,7 @@ test_transform = transforms.Compose([
     transforms.Resize((28, 28)),
     transforms.ToTensor()
 ])
+
 class MyDataset(Dataset):
     def __init__(self, im_list, transform=None,
                  loader = default_loader):
