@@ -112,6 +112,7 @@ for epoch in range(n_epoch):
         opt_G.step()
 
         ############################
+        # G loss
         opt_DA.zero_grad()
 
         #
