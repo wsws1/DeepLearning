@@ -88,6 +88,8 @@ ipython_config.py
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
 
+# idea
+.idea
 # Celery stuff
 celerybeat-schedule
 celerybeat.pid
@@ -152,5 +154,9 @@ output/
 
 # model
 *.pth
-*callbacks
-*callbacks/
+callbacks
+callbacks/
+dnn-callbacks
+dnn-callbacks/
+dnn-dropout-callbacks
+dnn-dropout-callbacks/
